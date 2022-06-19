@@ -1,20 +1,39 @@
-import imp
-from unittest import result
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework.response import Response
-
+from django.db.models import F, Q
 from django.contrib.auth import authenticate, login, logout
 
+from user.serializers import UserSerializer
+
+from Django.permissions import RegistedMoreThanAWeekUser
+
+from user.models import UserProfile as UserProfileModel
+from user.models import User as UserModel
+from user.models import Hobby as HobbyMOdel
 # Create your views here.
 
 
 class UserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [RegistedMoreThanAWeekUser]
 
     def get(self,request):
-        return Response({"message" : "get method!!"})
+        all_users = UserModel.objects.all()
+
+        # return Response(UserSerializer(request.user).data) # user 가 나 일때
+        return Response(UserSerializer(all_users, many=True).data)
+        
+        # 역참조 연습할 때 볼 것. _set 주의
+        # user = request.user
+        # hobbys = user.userprofile.hobby.all()
+        # for hobby in hobbys:
+        #     hobby_members = hobby.userprofile_set.exclude(user=user).annotate(username=F('user__username')).values_list('username', flat=True)
+        #     hobby_members = list(hobby_members)
+        #     print(f"hobby : {hobby.name} / hobby members : {hobby_members}" )
+
+        
         
     def post(self,request):
         return Response({"message" : "post method!!"})

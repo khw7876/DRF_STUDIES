@@ -21,3 +21,13 @@ class Article(models.Model):
 
     def __str__(self):
         return self
+
+class Comment(models.Model):
+    class Meta:
+        db_table = "comment"
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    comment = models.TextField()
+
+    def __str__(self):
+        return self

@@ -60,12 +60,12 @@ class Hobby(models.Model):
 
     def __str__(self):
         return self.name
+        
 
 
 class UserProfile(models.Model):
     # user = models.ForeignKey(User, verbose_name="유저", on_delete=models.CASCADE, unique=True)
-    user = models.OneToOneField(
-        User, verbose_name="유저", on_delete=models.CASCADE)
+    user = models.OneToOneField(to = User, verbose_name="유저", on_delete=models.CASCADE)
     introduction = models.TextField("자기소개", null=True, blank=True)
     birthday = models.DateField("생일")
     age = models.IntegerField("나이")
