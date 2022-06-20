@@ -1,5 +1,6 @@
 from dataclasses import fields
 import imp
+from re import T
 from rest_framework import serializers
 
 from user.models import User as UserModel
@@ -7,16 +8,7 @@ from user.models import UserProfile as UserProfileModel
 from user.models import Hobby as HobbyModel
 from blog.models import Article as ArticleModel
 from blog.models import Comment as CommentModel
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CommentModel
-        fields = ["comment"]
-
-class ArticleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ArticleModel
-        fields = ["user", "title"]
+from blog.serializers import ArticleSerializer
 
 class HobbySerializer(serializers.ModelSerializer):
     same_hobby_users = serializers.SerializerMethodField()
@@ -43,8 +35,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     userprofile = UserProfileSerializer()
-    article = ArticleSerializer()
-    comment = CommentSerializer()
+    article = ArticleSerializer(many=True, source = "article_set")
     class Meta:
         model = UserModel
-        fields = ["username", "email", "fullname", "join_data", "userprofile", "article", "comment"] #모델에서 가져올 수 있는 값, 역참조 가능
+        fields = ["username", "email", "fullname", "join_data", "userprofile", "article"] #모델에서 가져올 수 있는 값, 역참조 가능

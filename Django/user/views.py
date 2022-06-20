@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework import permissions
+from rest_framework import permissions, status
 from rest_framework.response import Response
 from django.db.models import F, Q
 from django.contrib.auth import authenticate, login, logout
@@ -16,14 +16,14 @@ from user.models import Hobby as HobbyMOdel
 
 
 class UserView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     # permission_classes = [RegistedMoreThanAWeekUser]
 
     def get(self,request):
         all_users = UserModel.objects.all()
 
         # return Response(UserSerializer(request.user).data) # user 가 나 일때
-        return Response(UserSerializer(all_users, many=True).data)
+        return Response(UserSerializer(all_users, many=True).data, status= status.HTTP_200_OK)
         
         # 역참조 연습할 때 볼 것. _set 주의
         # user = request.user
@@ -33,8 +33,6 @@ class UserView(APIView):
         #     hobby_members = list(hobby_members)
         #     print(f"hobby : {hobby.name} / hobby members : {hobby_members}" )
 
-        
-        
     def post(self,request):
         return Response({"message" : "post method!!"})
 
@@ -56,7 +54,6 @@ class UserAPIView(APIView):
         password = request.data.get('password', '')
 
         user = authenticate(request, username=username, password = password)
-        print(f"user : {user}")
         if user:
             login(request,user)
             return Response({"message" : "login success!!"})
