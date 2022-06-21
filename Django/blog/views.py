@@ -1,3 +1,4 @@
+from os import stat
 from unicodedata import category
 from django.shortcuts import render
 from rest_framework.response import Response
@@ -35,23 +36,38 @@ class ArticleView(APIView):
 
 
 
-    permission_classes = [three_days]
+    # permission_classes = [three_days]
     def post(self, request):
-        user = request.user
-        title = request.data.get('title', '')
-        categories = request.data.get('category', '')
-        contents = request.data.get('content', '')
 
-        if len(title) <= 5:
-            return Response({"message": "제목이 5글자 이하입니다."})
-        if len(contents)<=20:
-            return Response({"message": "내용은 20글자 이하입니다."})
-        if category is None:
-            return Response({"message": "카테고리를 지정해야 합니다."})
+        user = request.user
+        request.data['user'] = user.id
+        article_serializer = ArticleSerializer(data=request.data)
+
+        if article_serializer.is_valid():
+            article_serializer.save()
+            return Response(article_serializer.data, status=status.HTTP_200_OK)
+            
+        return Response(article_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+        # #---------------------------------------------------------------
+        # #기본적인 posting 방법입니다 !!
         
-        # new_article = ArticleModel.objects.create(user=user, title=title, contents=contents)
-        # new_article.category.add(*categories)
-        article = ArticleModel(user=user, **request.data)
-        article.save()
-        article.category.add(*categories)
-        return Response({"message" : "게시물 생성!"})
+        # user = request.user
+        # title = request.data.get('title', '')
+        # categories = request.data.get('category', '')
+        # contents = request.data.get('content', '')
+
+        # if len(title) <= 5:
+        #     return Response({"message": "제목이 5글자 이하입니다."})
+        # if len(contents)<=20:
+        #     return Response({"message": "내용은 20글자 이하입니다."})
+        # if category is None:
+        #     return Response({"message": "카테고리를 지정해야 합니다."})
+        
+        # article = ArticleModel.objects.create(user=user, **request.data)
+        # article.category.add(*categories)
+        # article.save()
+        # return Response({"message" : "게시물 생성!"})
+        # #-----------------------------------------------------------------
