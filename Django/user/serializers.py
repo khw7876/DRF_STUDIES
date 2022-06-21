@@ -2,6 +2,7 @@ from dataclasses import fields
 import imp
 from re import T
 from django import http
+from pkg_resources import require
 from rest_framework import serializers
 
 from user.models import User as UserModel
@@ -11,7 +12,7 @@ from blog.models import Article as ArticleModel
 from blog.models import Comment as CommentModel
 from blog.serializers import ArticleSerializer
 
-VALID_EMAIL_LIST = ["naver.com","gmail.com"]
+VALID_EMAIL_LIST = ["naver.com","gmail.com", "google.com"]
 class HobbySerializer(serializers.ModelSerializer):
     same_hobby_users = serializers.SerializerMethodField()
     
@@ -27,16 +28,18 @@ class HobbySerializer(serializers.ModelSerializer):
         fields = ["name", "same_hobby_users"]
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    hobby = HobbySerializer(many = True)
+    hobby = HobbySerializer(many = True, read_only=True)
     #여기에 objects로 들어오는지, 아니면 queryset으로 들어오는지를 알아야 함
     #queryset으로 들어 오려면 (many=True가 필요)
+    get_hobbys = serializers.ListField(required=False) #require은 무조건 얘가 채워져 있어야 하는가?
+
     class Meta:
         model = UserProfileModel
-        fields = ["introduction", "birthday", "age", "hobby"]
+        fields = ["introduction", "birthday", "age", "hobby", "get_hobbys"]
 
 
 class UserSerializer(serializers.ModelSerializer):
-    userprofile = UserProfileSerializer(read_only = True)
+    userprofile = UserProfileSerializer()
     article = ArticleSerializer(many=True, source = "article_set", read_only=True)
     
 
@@ -55,7 +58,33 @@ class UserSerializer(serializers.ModelSerializer):
                 )
 
         return data
-    
+
+    def create(self, validated_data):
+        user_profile = validated_data.pop("userprofile")
+        password = validated_data.pop("password")
+        get_hobbys = user_profile.pop("get_hobbys",[])
+
+        user = UserModel(**validated_data)
+        user.set_password(password)
+        user.save()
+
+        user_profile = UserProfileModel.objects.create(user= user, **user_profile)
+        user_profile.hobby.add(*get_hobbys)
+        return user
+
+
+    def update(self, instance, validated_data):
+        # instance에는 입력된 object가 담긴다.
+        for key, value in validated_data.items():
+            if key == "password":
+                instance.set_password(value)
+                continue
+            
+            setattr(instance, key, value)
+        instance.save()
+        return instance
+
+
     class Meta:
         model = UserModel
         fields = ["username", "password","email", "fullname", "join_data", "userprofile", "article"] #모델에서 가져올 수 있는 값, 역참조 가능
